@@ -10,10 +10,15 @@ $router->add("/home/index", ["controller" => "home", "action" => "index"]);
 $router->add("/products", ["controller" => "products", "action" => "index"]);
 $router->add("/", ["controller" => "home", "action" => "index"]);
 
-$segments = explode("/", $path);
+$params = $router->match($path);
 
-$action = $segments[2];
-$controller = $segments[1];
+if($params === false)
+{
+  exit("No route matched");
+}
+
+$action = $params['action'];
+$controller = $params['controller'];
 
 require "src/controllers/$controller.php";
 

@@ -4,7 +4,7 @@ class Router
 {
   private array $routes = [];
 
-  public function add(string $path, array $params) : void
+  public function add(string $path, array $params): void
   {
     $this->routes[] = [
       "path" => $path,
@@ -12,8 +12,14 @@ class Router
     ];
   }
 
-  public function match()
+  public function match(string $path): array | bool
   {
-    
+    foreach ($this->routes as $route) {
+      if ($route['path'] === $path) {
+        return $route['params'];
+      }
+    }
+
+    return false;
   }
 }
