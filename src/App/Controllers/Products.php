@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\Product;
+
 class Products
 {
   public function index()
