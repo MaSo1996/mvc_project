@@ -1,1 +1,0 @@
-Show na individual product here
