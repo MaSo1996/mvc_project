@@ -32,9 +32,7 @@ class ErrorHandler
       $template = "505.php";
     }
 
-    $showErrors = true;
-
-    if ($showErrors) {
+    if ($_ENV['SHOW_ERRORS']) {
       ini_set("display_errors", "1");
     } else {
       ini_set("display_errors", "0");
