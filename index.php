@@ -1,25 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
+spl_autoload_register(function (string $class_name) {
+  require "src/" . str_replace("\\", "/", $class_name) . ".php";
+});
+
+set_error_handler("Framework\ErrorHandler::handleError");
+
 use Framework\Dispatcher;
 
-$showErrors = false;
-
-if ($showErrors) {
-  ini_set("display_errors", "1");
-} else {
-  ini_set("display_errors", "0");
-  require "views/500.php";
-}
+set_exception_handler("Framework\ErrorHandler::handleException");
 
 $path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
 
 if ($path === false) {
   throw new UnexpectedValueException("Malformed URL: {$_SERVER["REQUEST_URI"]}");
 }
-
-spl_autoload_register(function (string $class_name) {
-  require "src/" . str_replace("\\", "/", $class_name) . ".php";
-});
 
 $router = new Framework\Router;
 
