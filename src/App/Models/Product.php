@@ -2,19 +2,6 @@
 
 namespace App\Models;
 
-use PDO;
-use App\Database;
+use Framework\Model;
 
-class Product
-{
-  public function __construct(private Database $database) {}
-
-  public function getData(): array
-  {
-    $pdo = $this->database->getConnection();
-
-    $stmt = $pdo->query("select * from product");
-
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-  }
-}
+class Product extends Model {}
