@@ -4,4 +4,7 @@ namespace App\Models;
 
 use Framework\Model;
 
-class Product extends Model {}
+class Product extends Model
+{
+  // protected $table = 'products';
+}

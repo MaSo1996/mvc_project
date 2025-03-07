@@ -7,13 +7,28 @@ use App\Database;
 
 abstract class Model
 {
+  protected $table;
+
+  private function getTable(): string
+  {
+    if ($this->table !== null) {
+      return $this->table;
+    }
+
+    $parts = explode("\\", $this::class);
+
+    return strtolower(array_pop($parts));
+  }
+
   public function __construct(private Database $database) {}
 
   public function findAll(): array
   {
     $pdo = $this->database->getConnection();
 
-    $stmt = $pdo->query("select * from product");
+    $sql = "select * from {$this->getTable()}";
+
+    $stmt = $pdo->query($sql);
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
@@ -22,7 +37,7 @@ abstract class Model
   {
     $conn = $this->database->getConnection();
 
-    $sql = "select * from product where id = :id";
+    $sql = "select * from {$this->getTable()} where id = :id";
 
     $stmt = $conn->prepare($sql);
 
