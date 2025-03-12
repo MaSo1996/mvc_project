@@ -47,4 +47,23 @@ abstract class Model
 
     return $stmt->fetch(PDO::FETCH_ASSOC);
   }
+
+  public function insert(array $data): bool
+  {
+    $columns = implode(", ", array_keys($data));
+    $placeholders = implode(", ", array_fill(0, count($data), "?"));
+
+    $sql = "insert into {$this->getTable()} ($columns) values ($placeholders)";
+
+    exit($sql);
+
+    $conn = $this->database->getConnection();
+
+    $stmt = $conn->prepare($sql);
+
+    $stmt->bindValue(1, $data['name'], PDO::PARAM_STR);
+    $stmt->bindValue(2, $data['description'], PDO::PARAM_STR);
+
+    return $stmt->execute();
+  }
 }
