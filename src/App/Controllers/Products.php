@@ -55,9 +55,19 @@ class Products
   {
     $data = [
       'name' => $_POST['name'],
-      'description' => $_POST['description']
+      'description' => empty($_POST['description']) ? null : $_POST['description']
     ];
 
-    var_dump($this->model->insert($data));
+    if ($this->model->insert($data)) {
+      echo 'Record saved, ID: ', $this->model->getInsertID();
+    } else {
+      echo $this->viewer->render('shared/header.php', [
+        'title' => 'New Product'
+      ]);
+
+      echo $this->viewer->render('Products/new.php', [
+        'errors' => $this->model->getErrors()
+      ]);
+    }
   }
 }

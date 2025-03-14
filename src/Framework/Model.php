@@ -9,6 +9,17 @@ abstract class Model
 {
   protected $table;
 
+  protected array $errors = [];
+
+  protected function validate(array $data): void {}
+
+  public function getInsertID(): string
+  {
+    $conn = $this->database->getConnection();
+
+    return $conn->lastInsertId();
+  }
+
   private function getTable(): string
   {
     if ($this->table !== null) {
@@ -50,20 +61,45 @@ abstract class Model
 
   public function insert(array $data): bool
   {
+    $this->validate($data);
+
+    if (!empty($this->errors)) {
+      return false;
+    }
+
     $columns = implode(", ", array_keys($data));
     $placeholders = implode(", ", array_fill(0, count($data), "?"));
 
     $sql = "insert into {$this->getTable()} ($columns) values ($placeholders)";
 
-    exit($sql);
-
     $conn = $this->database->getConnection();
 
     $stmt = $conn->prepare($sql);
 
-    $stmt->bindValue(1, $data['name'], PDO::PARAM_STR);
-    $stmt->bindValue(2, $data['description'], PDO::PARAM_STR);
+    $i = 1;
+
+    foreach ($data as $value) {
+
+      $type = match (gettype($value)) {
+        'boolean' => PDO::PARAM_BOOL,
+        'integer' => PDO::PARAM_INT,
+        'NULL' => PDO::PARAM_NULL,
+        default => PDO::PARAM_STR
+      };
+
+      $stmt->bindValue($i++, $value, $type);
+    }
 
     return $stmt->execute();
+  }
+
+  public function getErrors(): array
+  {
+    return $this->errors;
+  }
+
+  protected function addError(string $field, string $message): void
+  {
+    $this->errors[$field] = $message;
   }
 }
