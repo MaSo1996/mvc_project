@@ -13,6 +13,8 @@
 
   <a href="/products/new">New Product</a>
 
+  <p>Total: <?= $total ?></p>
+
   <?php
 
   foreach ($products as $product) :

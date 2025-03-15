@@ -13,6 +13,51 @@ abstract class Model
 
   protected function validate(array $data): void {}
 
+  public function update(string $id, array $data): bool
+  {
+    $this->validate($data);
+
+    if (!empty($this->errors)) {
+      return false;
+    }
+
+    $sql = "update {$this->getTable()}";
+
+    unset($data['id']);
+
+    $assignments = array_keys($data);
+
+    array_walk($assignments, function (&$value) {
+      $value = "$value = ?";
+    });
+
+    $sql .= " set " . implode(", ", $assignments);
+
+    $sql .= " where id = ?";
+
+    $conn = $this->database->getConnection();
+
+    $stmt = $conn->prepare($sql);
+
+    $i = 1;
+
+    foreach ($data as $value) {
+
+      $type = match (gettype($value)) {
+        'boolean' => PDO::PARAM_BOOL,
+        'integer' => PDO::PARAM_INT,
+        'NULL' => PDO::PARAM_NULL,
+        default => PDO::PARAM_STR
+      };
+
+      $stmt->bindValue($i++, $value, $type);
+    }
+
+    $stmt->bindValue($i, $id, PDO::PARAM_INT);
+
+    return $stmt->execute();
+  }
+
   public function getInsertID(): string
   {
     $conn = $this->database->getConnection();
@@ -31,7 +76,7 @@ abstract class Model
     return strtolower(array_pop($parts));
   }
 
-  public function __construct(private Database $database) {}
+  public function __construct(protected Database $database) {}
 
   public function findAll(): array
   {
@@ -101,5 +146,18 @@ abstract class Model
   protected function addError(string $field, string $message): void
   {
     $this->errors[$field] = $message;
+  }
+
+  public function delete(string $id): bool
+  {
+    $sql = "delete from {$this->getTable()} where id = :id";
+
+    $conn = $this->database->getConnection();
+
+    $stmt = $conn->prepare($sql);
+
+    $stmt->bindValue(":id", $id, PDO::PARAM_INT);
+
+    return $stmt->execute();
   }
 }
