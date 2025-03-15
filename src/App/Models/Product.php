@@ -6,7 +6,7 @@ use Framework\Model;
 
 class Product extends Model
 {
-  protected $table = 'products';
+  // protected $table = 'product';
 
   protected function validate(array $data): void
   {

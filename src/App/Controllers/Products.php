@@ -37,6 +37,21 @@ class Products
     echo $this->viewer->render("Products/show.php", ['product' => $product]);
   }
 
+  public function edit(string $id)
+  {
+    $product = $this->model->find($id);
+
+    if ($product === false) {
+      throw new PageNotFoundException("Product not found");
+    }
+
+    echo $this->viewer->render('shared/header.php', [
+      'title' => 'Edit Product'
+    ]);
+
+    echo $this->viewer->render("Products/edit.php", ['product' => $product]);
+  }
+
   public function showPage(string $title, string $id, string $page)
   {
     echo $title, " ", $id, " ", $page;
@@ -59,7 +74,8 @@ class Products
     ];
 
     if ($this->model->insert($data)) {
-      echo 'Record saved, ID: ', $this->model->getInsertID();
+      header("Location: /products/{$this->model->getInsertID()}/show");
+      exit;
     } else {
       echo $this->viewer->render('shared/header.php', [
         'title' => 'New Product'
