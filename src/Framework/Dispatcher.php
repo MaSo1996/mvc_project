@@ -9,12 +9,12 @@ class Dispatcher
 {
   public function __construct(private Router $router, private Container $container) {}
 
-  public function handle(string $path)
+  public function handle(string $path, string $method)
   {
-    $params = $this->router->match($path);
+    $params = $this->router->match($path, $method);
 
     if ($params === false) {
-      throw new PageNotFoundException("No route matched for {$path}");
+      throw new PageNotFoundException("No route matched for {$path} with method {$method}");
     }
 
     $action = $this->getActionName($params);
