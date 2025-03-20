@@ -5,7 +5,6 @@ namespace App\Controllers;
 use App\Models\Product;
 use Framework\Controller;
 use Framework\Exceptions\PageNotFoundException;
-use Framework\Viewer;
 
 class Products extends Controller
 {

@@ -2,7 +2,7 @@
 
 namespace Framework;
 
-class Viewer
+class MVCTemplateViewer implements TemplateViewerInterface
 {
   public function render(string $template, array $data = []): string
   {
