@@ -1,71 +1,78 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework;
 
 class Router
 {
-  private array $routes = [];
+    private array $routes = [];
 
-  public function add(string $path, array $params = []): void
-  {
-    $this->routes[] = [
-      "path" => $path,
-      "params" => $params
-    ];
-  }
-
-  public function match(string $path, string $method): array | bool
-  {
-    $path = urldecode($path);
-
-    $path = trim($path, "/");
-
-    foreach ($this->routes as $route) {
-      $pattern = $this->getPatternFromRoutePath($route['path']);
-
-      if (preg_match($pattern, $path, $matches)) {
-
-        $matches = array_filter($matches, "is_string", ARRAY_FILTER_USE_KEY);
-
-        $params = array_merge($matches, $route['params']);
-
-        if (array_key_exists('method', $params)) {
-          if (strtolower($method) !== strtolower($params['method'])) {
-            continue;
-          }
-        }
-
-        return $params;
-      }
+    public function add(string $path, array $params = []): void
+    {
+        $this->routes[] = [
+            "path" => $path,
+            "params" => $params
+        ];
     }
 
-    // foreach ($this->routes as $route) {
-    //   if ($route['path'] === $path) {
-    //     return $route['params'];
-    //   }
-    // }
+    public function match(string $path, string $method): array|bool
+    {
+        $path = urldecode($path);
+        
+        $path = trim($path, "/");
+        
+        foreach ($this->routes as $route) {
+        
+            $pattern = $this->getPatternFromRoutePath($route["path"]);
 
-    return false;
-  }
+            if (preg_match($pattern, $path, $matches)) {
 
-  private function getPatternFromRoutePath(string $route_path): string
-  {
-    $route_path = trim($route_path, "/");
+                $matches = array_filter($matches, "is_string", ARRAY_FILTER_USE_KEY);
 
-    $segments = explode("/", $route_path);
+                $params = array_merge($matches, $route["params"]);
 
-    $segments = array_map(function (string $segment): string {
-      if (preg_match("#^\{([a-z][a-z0-9]*)\}$#", $segment, $matches)) {
-        return "(?<" . $matches[1] . ">.[^/]*)";
-      }
+                if (array_key_exists("method", $params)) {
 
-      if (preg_match("#^\{([a-z][a-z0-9]*):(.+)\}$#", $segment, $matches)) {
-        return "(?<" . $matches[1] . ">" . $matches[2] . ")";
-      }
+                    if (strtolower($method) !== strtolower($params["method"])) {
 
-      return $segment;
-    }, $segments);
+                        continue;
 
-    return "#^" . implode("/", $segments) . "$#iu";
-  }
+                    }
+
+                }
+
+                return $params;
+            }
+        }
+
+        return false;
+    }
+
+    private function getPatternFromRoutePath(string $route_path): string
+    {
+        $route_path = trim($route_path, "/");
+
+        $segments = explode("/", $route_path);
+
+        $segments = array_map(function(string $segment): string {
+
+            if (preg_match("#^\{([a-z][a-z0-9]*)\}$#", $segment, $matches)) {
+
+                return "(?<" . $matches[1] . ">[^/]*)";
+
+            }
+
+            if (preg_match("#^\{([a-z][a-z0-9]*):(.+)\}$#", $segment, $matches)) {
+
+                return "(?<" . $matches[1] . ">" . $matches[2] . ")";
+
+            }
+
+            return $segment;
+
+        }, $segments);
+
+        return "#^" . implode("/", $segments) . "$#iu";
+    }
 }

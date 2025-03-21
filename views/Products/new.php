@@ -2,5 +2,6 @@
 
 <form method="post" action="/products/create">
 
-  <?php require "form.php"; ?>
+<?php require "form.php" ?>
+
 </form>

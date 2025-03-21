@@ -4,4 +4,6 @@ namespace Framework\Exceptions;
 
 use DomainException;
 
-class PageNotFoundException extends DomainException {}
+class PageNotFoundException extends DomainException
+{
+}

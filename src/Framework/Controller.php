@@ -6,17 +6,17 @@ namespace Framework;
 
 abstract class Controller
 {
-  protected Request $request;
+    protected Request $request;
 
-  protected PHPTemplateViewer $viewer;
+    protected TemplateViewerInterface $viewer;
+    
+    public function setRequest(Request $request): void
+    {
+        $this->request = $request;
+    }
 
-  public function setRequest(Request $request): void
-  {
-    $this->request = $request;
-  }
-
-  public function setViewer(PHPTemplateViewer $viewer): void
-  {
-    $this->viewer = $viewer;
-  }
+    public function setViewer(TemplateViewerInterface $viewer): void
+    {
+        $this->viewer = $viewer;
+    }
 }

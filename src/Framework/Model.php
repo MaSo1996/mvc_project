@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework;
 
 use PDO;
@@ -7,157 +9,170 @@ use App\Database;
 
 abstract class Model
 {
-  protected $table;
+    protected $table;
 
-  protected array $errors = [];
+    protected array $errors = [];
 
-  protected function validate(array $data): void {}
+    public function update(string $id, array $data): bool
+    {
+        $this->validate($data);
 
-  public function update(string $id, array $data): bool
-  {
-    $this->validate($data);
+        if ( ! empty($this->errors)) {
+            return false;
+        }
+        
+        $sql = "UPDATE {$this->getTable()} ";
 
-    if (!empty($this->errors)) {
-      return false;
+        unset($data["id"]);
+
+        $assignments = array_keys($data);
+
+        array_walk($assignments, function (&$value) {
+            $value = "$value = ?";
+        });
+
+        $sql .= " SET " . implode(", ", $assignments);
+
+        $sql .= " WHERE id = ?";
+
+        $conn = $this->database->getConnection();
+
+        $stmt = $conn->prepare($sql);
+
+        $i = 1;
+
+        foreach ($data as $value) {
+
+            $type = match(gettype($value)) {
+                "boolean" => PDO::PARAM_BOOL,
+                "integer" => PDO::PARAM_INT,
+                "NULL" => PDO::PARAM_NULL,
+                default => PDO::PARAM_STR
+            };
+
+            $stmt->bindValue($i++, $value, $type);
+
+        }
+
+        $stmt->bindValue($i, $id, PDO::PARAM_INT);
+
+        return $stmt->execute();        
     }
 
-    $sql = "update {$this->getTable()}";
-
-    unset($data['id']);
-
-    $assignments = array_keys($data);
-
-    array_walk($assignments, function (&$value) {
-      $value = "$value = ?";
-    });
-
-    $sql .= " set " . implode(", ", $assignments);
-
-    $sql .= " where id = ?";
-
-    $conn = $this->database->getConnection();
-
-    $stmt = $conn->prepare($sql);
-
-    $i = 1;
-
-    foreach ($data as $value) {
-
-      $type = match (gettype($value)) {
-        'boolean' => PDO::PARAM_BOOL,
-        'integer' => PDO::PARAM_INT,
-        'NULL' => PDO::PARAM_NULL,
-        default => PDO::PARAM_STR
-      };
-
-      $stmt->bindValue($i++, $value, $type);
+    protected function validate(array $data): void
+    {
     }
 
-    $stmt->bindValue($i, $id, PDO::PARAM_INT);
+    public function getInsertID(): string
+    {
+        $conn = $this->database->getConnection();
 
-    return $stmt->execute();
-  }
-
-  public function getInsertID(): string
-  {
-    $conn = $this->database->getConnection();
-
-    return $conn->lastInsertId();
-  }
-
-  private function getTable(): string
-  {
-    if ($this->table !== null) {
-      return $this->table;
+        return $conn->lastInsertId();
     }
 
-    $parts = explode("\\", $this::class);
-
-    return strtolower(array_pop($parts));
-  }
-
-  public function __construct(protected Database $database) {}
-
-  public function findAll(): array
-  {
-    $pdo = $this->database->getConnection();
-
-    $sql = "select * from {$this->getTable()}";
-
-    $stmt = $pdo->query($sql);
-
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-  }
-
-  public function find(string $id): array|bool
-  {
-    $conn = $this->database->getConnection();
-
-    $sql = "select * from {$this->getTable()} where id = :id";
-
-    $stmt = $conn->prepare($sql);
-
-    $stmt->bindValue(":id", $id, PDO::PARAM_INT);
-
-    $stmt->execute();
-
-    return $stmt->fetch(PDO::FETCH_ASSOC);
-  }
-
-  public function insert(array $data): bool
-  {
-    $this->validate($data);
-
-    if (!empty($this->errors)) {
-      return false;
+    protected function addError(string $field, string $message): void
+    {
+        $this->errors[$field] = $message;
     }
 
-    $columns = implode(", ", array_keys($data));
-    $placeholders = implode(", ", array_fill(0, count($data), "?"));
-
-    $sql = "insert into {$this->getTable()} ($columns) values ($placeholders)";
-
-    $conn = $this->database->getConnection();
-
-    $stmt = $conn->prepare($sql);
-
-    $i = 1;
-
-    foreach ($data as $value) {
-
-      $type = match (gettype($value)) {
-        'boolean' => PDO::PARAM_BOOL,
-        'integer' => PDO::PARAM_INT,
-        'NULL' => PDO::PARAM_NULL,
-        default => PDO::PARAM_STR
-      };
-
-      $stmt->bindValue($i++, $value, $type);
+    public function getErrors(): array
+    {
+        return $this->errors;
     }
 
-    return $stmt->execute();
-  }
+    private function getTable(): string
+    {
+        if ($this->table !== null) {
 
-  public function getErrors(): array
-  {
-    return $this->errors;
-  }
+            return $this->table;
 
-  protected function addError(string $field, string $message): void
-  {
-    $this->errors[$field] = $message;
-  }
+        }
 
-  public function delete(string $id): bool
-  {
-    $sql = "delete from {$this->getTable()} where id = :id";
+        $parts = explode("\\", $this::class);
 
-    $conn = $this->database->getConnection();
+        return strtolower(array_pop($parts));
+    }
 
-    $stmt = $conn->prepare($sql);
+    public function __construct(protected Database $database)
+    {
+    }
 
-    $stmt->bindValue(":id", $id, PDO::PARAM_INT);
+    public function findAll(): array
+    {
+        $pdo = $this->database->getConnection();
 
-    return $stmt->execute();
-  }
+        $sql = "SELECT *
+                FROM {$this->getTable()}";
+
+        $stmt = $pdo->query($sql);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function find(string $id): array|bool
+    {
+        $conn = $this->database->getConnection();
+
+        $sql = "SELECT *
+                FROM {$this->getTable()}
+                WHERE id = :id";
+
+        $stmt = $conn->prepare($sql);
+
+        $stmt->bindValue(":id", $id, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function insert(array $data): bool
+    {
+        $this->validate($data);
+
+        if ( ! empty($this->errors)) {
+            return false;
+        }
+
+        $columns = implode(", ", array_keys($data));
+        $placeholders = implode(", ", array_fill(0, count($data), "?"));
+
+        $sql = "INSERT INTO {$this->getTable()} ($columns)
+                VALUES ($placeholders)";
+
+        $conn = $this->database->getConnection();
+
+        $stmt = $conn->prepare($sql);
+
+        $i = 1;
+
+        foreach ($data as $value) {
+
+            $type = match(gettype($value)) {
+                "boolean" => PDO::PARAM_BOOL,
+                "integer" => PDO::PARAM_INT,
+                "NULL" => PDO::PARAM_NULL,
+                default => PDO::PARAM_STR
+            };
+
+            $stmt->bindValue($i++, $value, $type);
+
+        }
+
+        return $stmt->execute();
+    }
+
+    public function delete(string $id): bool
+    {
+        $sql = "DELETE FROM {$this->getTable()}
+                WHERE id = :id";
+
+        $conn = $this->database->getConnection();
+
+        $stmt = $conn->prepare($sql);
+
+        $stmt->bindValue(":id", $id, PDO::PARAM_INT);
+
+        return $stmt->execute();
+    }
 }

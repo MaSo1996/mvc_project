@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Framework;
 
 use ReflectionMethod;
@@ -8,79 +10,90 @@ use UnexpectedValueException;
 
 class Dispatcher
 {
-  public function __construct(private Router $router, private Container $container) {}
-
-  public function handle(Request $request)
-  {
-    $path = $this->getPath($request->uri);
-
-    $params = $this->router->match($path, $request->method);
-
-    if ($params === false) {
-      throw new PageNotFoundException("No route matched for {$path} with method {$request->method}");
+    public function __construct(private Router $router,
+                                private Container $container)
+    {
     }
 
-    $action = $this->getActionName($params);
-    $controller = $this->getControllerName($params);
+    public function handle(Request $request)
+    {
+        $path = $this->getPath($request->uri);
 
-    $controller_object = $this->container->get($controller);
+        $params = $this->router->match($path, $request->method);
 
-    $controller_object->setRequest($request);
+        if ($params === false) {
 
-    $controller_object->setViewer($this->container->get(PHPTemplateViewer::class));
+            throw new PageNotFoundException("No route matched for '$path' with method '{$request->method}'");
 
-    $args = $this->getActionArguments($controller, $action, $params);
+        }
 
-    $controller_object->$action(...$args);
-  }
+        $action = $this->getActionName($params);
+        $controller = $this->getControllerName($params);
 
-  private function getActionArguments(string $controller, string $action, array $params): array
-  {
-    $args = [];
+        $controller_object = $this->container->get($controller);
 
-    $method = new ReflectionMethod($controller, $action);
+        $controller_object->setRequest($request);
 
-    foreach ($method->getParameters() as $parameter) {
-      $name = $parameter->getName();
+        $controller_object->setViewer($this->container->get(TemplateViewerInterface::class));
 
-      $args[$name] = $params[$name];
+        $args = $this->getActionArguments($controller, $action, $params);
+
+        $controller_object->$action(...$args);
     }
 
-    return $args;
-  }
+    private function getActionArguments(string $controller, string $action, array $params): array
+    {
+        $args = [];
+        
+        $method = new ReflectionMethod($controller, $action);
 
-  private function getControllerName(array $params): string
-  {
-    $controller = $params['controller'];
+        foreach ($method->getParameters() as $parameter) {
 
-    $controller = str_replace("-", "", ucwords(strtolower($controller), "-"));
+            $name = $parameter->getName();
 
-    $namespace = "App\Controllers";
+            $args[$name] = $params[$name];
 
-    if (array_key_exists('namespace', $params)) {
-      $namespace .= "\\" . $params['namespace'];
+        }
+
+        return $args;
     }
 
-    return $namespace . "\\" . $controller;
-  }
+    private function getControllerName(array $params): string
+    {
+        $controller = $params["controller"];
 
-  private function getActionName(array $params): string
-  {
-    $action = $params['action'];
+        $controller = str_replace("-", "", ucwords(strtolower($controller), "-"));
 
-    $action = lcfirst(str_replace("-", "", ucwords(strtolower($action), "-")));
+        $namespace = "App\Controllers";
 
-    return $action;
-  }
+        if (array_key_exists("namespace", $params)) {
 
-  private function getPath(string $uri): string
-  {
-    $path = parse_url($uri, PHP_URL_PATH);
+            $namespace .= "\\" . $params["namespace"];
 
-    if ($path === false) {
-      throw new UnexpectedValueException("Malformed URL: {$uri}");
+        }
+
+        return $namespace . "\\" . $controller;
     }
 
-    return $path;
-  }
+    private function getActionName(array $params): string
+    {
+        $action = $params["action"];
+
+        $action = lcfirst(str_replace("-", "", ucwords(strtolower($action), "-")));
+
+        return $action;
+    }
+
+    private function getPath(string $uri): string
+    {
+        $path = parse_url($uri, PHP_URL_PATH);
+
+        if ($path === false) {
+        
+            throw new UnexpectedValueException("Malformed URL: '$uri'");
+        
+        }        
+
+        return $path;
+    }
 }
