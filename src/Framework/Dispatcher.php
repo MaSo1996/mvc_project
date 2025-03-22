@@ -10,12 +10,12 @@ use UnexpectedValueException;
 
 class Dispatcher
 {
-    public function __construct(private Router $router,
-                                private Container $container)
-    {
-    }
+    public function __construct(
+        private Router $router,
+        private Container $container
+    ) {}
 
-    public function handle(Request $request)
+    public function handle(Request $request): Response
     {
         $path = $this->getPath($request->uri);
 
@@ -24,7 +24,6 @@ class Dispatcher
         if ($params === false) {
 
             throw new PageNotFoundException("No route matched for '$path' with method '{$request->method}'");
-
         }
 
         $action = $this->getActionName($params);
@@ -36,15 +35,17 @@ class Dispatcher
 
         $controller_object->setViewer($this->container->get(TemplateViewerInterface::class));
 
+        $controller_object->setResponse($this->container->get(Response::class));
+
         $args = $this->getActionArguments($controller, $action, $params);
 
-        $controller_object->$action(...$args);
+        return $controller_object->$action(...$args);
     }
 
     private function getActionArguments(string $controller, string $action, array $params): array
     {
         $args = [];
-        
+
         $method = new ReflectionMethod($controller, $action);
 
         foreach ($method->getParameters() as $parameter) {
@@ -52,7 +53,6 @@ class Dispatcher
             $name = $parameter->getName();
 
             $args[$name] = $params[$name];
-
         }
 
         return $args;
@@ -69,7 +69,6 @@ class Dispatcher
         if (array_key_exists("namespace", $params)) {
 
             $namespace .= "\\" . $params["namespace"];
-
         }
 
         return $namespace . "\\" . $controller;
@@ -89,10 +88,9 @@ class Dispatcher
         $path = parse_url($uri, PHP_URL_PATH);
 
         if ($path === false) {
-        
+
             throw new UnexpectedValueException("Malformed URL: '$uri'");
-        
-        }        
+        }
 
         return $path;
     }

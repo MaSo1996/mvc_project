@@ -7,7 +7,6 @@ define("ROOT_PATH", dirname(__DIR__));
 spl_autoload_register(function (string $class_name) {
 
     require ROOT_PATH . "/src/" . str_replace("\\", "/", $class_name) . ".php";
-
 });
 
 $dotenv = new Framework\Dotenv;
@@ -26,4 +25,6 @@ $dispatcher = new Framework\Dispatcher($router, $container);
 
 $request = Framework\Request::createFromGlobals();
 
-$dispatcher->handle($request);
+$response = $dispatcher->handle($request);
+
+$response->send();
