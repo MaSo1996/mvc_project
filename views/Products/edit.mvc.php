@@ -8,7 +8,7 @@
 
 <form method="post" action="/products/{{ product["id"] }}/update">
 
-  {% include "Products/form.mvc.php" %}
+{% include "Products/form.mvc.php" %}
 
 </form>
 

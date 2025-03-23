@@ -8,9 +8,9 @@
 
 <form method="post" action="/products/{{ product["id"] }}/destroy">
 
-  <p>Delete this product?</p>
+<p>Delete this product?</p>
 
-  <button>Yes</button>
+<button>Yes</button>
 
 </form>
 

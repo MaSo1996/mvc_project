@@ -11,7 +11,7 @@ abstract class Controller
     protected Response $response;
 
     protected TemplateViewerInterface $viewer;
-
+    
     public function setResponse(Response $response): void
     {
         $this->response = $response;
@@ -31,7 +31,7 @@ abstract class Controller
     {
         $this->response->setBody($this->viewer->render($template, $data));
 
-        return $this->response;
+        return $this->response;        
     }
 
     protected function redirect(string $url): Response

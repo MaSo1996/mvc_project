@@ -8,11 +8,12 @@ use App\Models\Product;
 use Framework\Exceptions\PageNotFoundException;
 use Framework\Controller;
 use Framework\Response;
-use LDAP\Result;
 
 class Products extends Controller
 {
-    public function __construct(private Product $model) {}
+    public function __construct(private Product $model)
+    {
+    }
 
     public function index(): Response
     {
@@ -49,14 +50,10 @@ class Products extends Controller
         if ($product === false) {
 
             throw new PageNotFoundException("Product not found");
+
         }
 
         return $product;
-    }
-
-    public function showPage(string $title, string $id, string $page)
-    {
-        echo $title, " ", $id, " ", $page;
     }
 
     public function new(): Response
@@ -74,34 +71,38 @@ class Products extends Controller
         if ($this->model->insert($data)) {
 
             return $this->redirect("/products/{$this->model->getInsertID()}/show");
+
         } else {
 
             return $this->view("Products/new.mvc.php", [
                 "errors" => $this->model->getErrors(),
                 "product" => $data
             ]);
+
         }
     }
 
     public function update(string $id): Response
     {
         $product = $this->getProduct($id);
-
+        
         $product["name"] = $this->request->post["name"];
         $product["description"] = empty($this->request->post["description"]) ? null : $this->request->post["description"];
 
         if ($this->model->update($id, $product)) {
 
             return $this->redirect("/products/{$id}/show");
+
         } else {
 
             return $this->view("Products/edit.mvc.php", [
                 "errors" => $this->model->getErrors(),
                 "product" => $product
             ]);
+
         }
     }
-
+    
     public function delete(string $id): Response
     {
         $product = $this->getProduct($id);
@@ -118,14 +119,5 @@ class Products extends Controller
         $this->model->delete($id);
 
         return $this->redirect("/products/index");
-    }
-
-    public function responseCodeExample(): Response
-    {
-        $this->response->setStatusCode(451);
-
-        $this->response->setBody('Unavailable for lega reasons');
-
-        return $this->response;
     }
 }
